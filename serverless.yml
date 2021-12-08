@@ -1,0 +1,79 @@
+service: rest-api
+
+# Create an optimized package for our functions
+package:
+  individually: true
+
+plugins:
+  - serverless-bundle # Package our functions with Webpack
+  - serverless-offline
+  - serverless-dotenv-plugin # Load .env as environment variables
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: prod
+  region: us-east-1
+
+  # These environment variables are made available to our functions
+  # under process.env.
+  environment:
+    tableName: tests #here is the name of the table set in  aws dynamoDB
+
+  # 'iamRoleStatements' defines the permission policy for the Lambda function.
+  # In this case Lambda functions are granted with permissions to access DynamoDB.
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Scan
+        - dynamodb:Query
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+        - dynamodb:DescribeTable
+      Resource: "arn:aws:dynamodb:us-east-1:*:*"
+
+functions:
+  # Defines an HTTP API endpoint that calls the main function in create.js
+  # - path: url path is /notes
+  # - method: POST request
+  create:
+    handler: create.main #source to go to the function called "main"
+    events:
+      - http:
+          path: notes #source /path
+          cors: true
+          method: post
+  get:
+    handler: handler/get.main
+    events:
+      - http:
+        path: note/{id}
+        cors: true
+        method: get
+        integration: lambda
+  getall:
+    handler: handler/list.main
+    events:
+      - http:
+        path: notes
+        cors: true
+        method: get
+        integration: lambda
+  update:
+    handler: update.main
+    events:
+      - http:
+          path: notes/{id}
+          cors: true
+          method: put
+          integration: lambda
+  delete:
+    handler: delete.main
+    events:
+      - http:
+          path: notes/{id}
+          cors: true
+          method: delete
+          integration: lambda
